@@ -5,7 +5,10 @@ import cv2
 import dlib
 import mediapipe as mp
 import numpy as np
+import pymongo
 import pyrebase
+import streamlit as st
+from bson.objectid import ObjectId
 from imutils import face_utils
 from mediapipe.python.solutions.drawing_utils import \
     _normalized_to_pixel_coordinates as denormalize_coordinates
@@ -196,14 +199,19 @@ class VideoFrameHandler:
                 plot_text(frame, "Yawn Alert", (460, 440), (0, 0, 255))
                 time.sleep(1)
                 self.count_yawn += 1
-                if os.environ.get("logged_in") == True:
+                if os.environ.get("logged_in") == "True":
                     user_id = os.environ.get("user_id")
                     email = os.environ.get("email")
-                    variable_location = db.child("users").push(self.count_yawn, user_id)
-                    email_location = db.child("users").child(user_id).child("email")
-                    #results = db.child("users").push(data, login['idToken'])
-                    variable_location.set(self.count_yawn)
-                    email_location.set(email)
+                    client = pymongo.MongoClient("mongodb+srv://admin:Admin123@aps.agcjjww.mongodb.net/?retryWrites=true&w=majority")
+                    db = client["aps-db"]
+                    users = db["count"]
+                    user = users.find_one({"_id": ObjectId(user_id)})
+                    if user:
+                        users.update_one({"_id": ObjectId(user_id)}, {"$set": {"count_yawn": self.count_yawn, "email": email}})
+                    else:
+                        users.insert_one({"_id": ObjectId(user_id), "count_yawn": self.count_yawn, "email": email})
+                else:
+                    st.error("Not logged in")
         frame = plot_text(frame, f"Yawn count: {self.count_yawn}",(420,410), color=(0, 255, 0), thickness=2)
 
         if results.multi_face_landmarks:
@@ -226,14 +234,17 @@ class VideoFrameHandler:
                     plot_text(frame, "WAKE UP! WAKE UP", ALM_txt_pos, self.state_tracker["COLOR"])
                     time.sleep(1)
                     self.count_drowsy += 1
-                    if os.environ.get("logged_in") == True:
+                    if os.environ.get("logged_in") == "True":
                         user_id = os.environ.get("user_id")
                         email = os.environ.get("email")
-                        variable_location = db.child("users").child(user_id).child("drowsy_count")
-                        email_location = db.child("users").child(user_id).child("email")
-                        variable_location.set(self.count_drowsy)
-                        email_location.set(email)
-
+                        client = pymongo.MongoClient("mongodb+srv://admin:Admin123@aps.agcjjww.mongodb.net/?retryWrites=true&w=majority")
+                        db = client["aps-db"]
+                        users = db["count"]
+                        user = users.find_one({"_id": ObjectId(user_id)})
+                        if user:
+                            users.update_one({"_id": ObjectId(user_id)}, {"$set": {"count_drowsy": self.count_drowsy, "email": email}})
+                        else:
+                            users.insert_one({"_id": ObjectId(user_id), "count_drowsy": self.count_drowsy, "email": email})
             else:
                 self.state_tracker["start_time"] = time.perf_counter()
                 self.state_tracker["DROWSY_TIME"] = 0.0
