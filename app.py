@@ -15,6 +15,22 @@ from drowsy_detection import VideoFrameHandler
 alarm_file_path = os.path.join("audio", "wake_up.wav")
 logged_in = False
 
+def update_sliders():
+    slider_wait = 1.0
+    eye_thresh = 0.18
+    lip_thresh = 0.2
+
+    client = pymongo.MongoClient("mongodb+srv://admin:Admin123@aps.agcjjww.mongodb.net/?retryWrites=true&w=majority")
+    db = client["aps-db"]
+    slider_values = db["slider-values"]
+
+    if slider_wait != WAIT_TIME:
+        slider_values.update_one({"slider_name": "Wait_Time"}, {"$set": {"value": WAIT_TIME}}, upsert=True)
+    if eye_thresh != EAR_THRESH:
+        slider_values.update_one({"slider_name": "Eye_Threshold"}, {"$set": {"value": EAR_THRESH}}, upsert=True)
+    if lip_thresh != LIP_THRESH:
+        slider_values.update_one({"slider_name": "Lip_Threshold"}, {"$set": {"value": LIP_THRESH}}, upsert=True)
+
 # Streamlit Components
 st.set_page_config(
     page_title="Drowsiness Detection | APS",
@@ -53,7 +69,7 @@ if menu_choice == "Home":
         "WAIT_TIME": WAIT_TIME, 
         "LIP_THRESH": LIP_THRESH
     }
-
+    update_sliders()
 
     # For streamlit-webrtc
     video_handler = VideoFrameHandler()
