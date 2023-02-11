@@ -179,8 +179,13 @@ if menu_choice == "OTP Login":
             .create(to=verified_number, code=otp_code)
             if (verification_check.status == "approved"):
                 st.success("OTP Verified")
+                client = pymongo.MongoClient("mongodb+srv://admin:Admin123@aps.agcjjww.mongodb.net/?retryWrites=true&w=majority")
+                db = client["aps-db"]
+                users = db["users"]
+                users.insert_one({"phone": verified_number})
             else:
                 st.error("OTP Verification Failed")
+            
     
 hide_streamlit_style = """
             <style>
