@@ -7,6 +7,7 @@ import pymongo
 import streamlit as st
 from streamlit_option_menu import option_menu
 from streamlit_webrtc import VideoHTMLAttributes, webrtc_streamer
+from twilio.rest import Client
 
 from audio_handling import AudioFrameHandler
 from drowsy_detection import VideoFrameHandler
@@ -36,12 +37,13 @@ st.set_page_config(
     page_title="Drowsiness Detection | APS",
     page_icon="https://framerusercontent.com/modules/466qV2P53XLpEfUjjmZC/FNnZTYISEsUGPpjII54W/assets/VebAVoINVBFxBTpsrQVLHznVo.png",
     initial_sidebar_state="expanded",
+    layout="wide",
 )
 
 menu_choice = option_menu(
             menu_title=None,  
-            options=["Home", "Login", "Signup", "About"],  
-            icons=["house", "box-arrow-in-right", "images", "question-circle", "envelope"],  
+            options=["Home", "Login", "Signup", "OTP Login", "About"],  
+            icons=["house", "box-arrow-in-right", "pencil-square","telephone", "question-circle"],  
             menu_icon="cast",  
             default_index=0,  
             orientation="horizontal",
@@ -147,6 +149,38 @@ if menu_choice == "Signup":
         except Exception as e:
             st.error("An error occurred: {}".format(str(e)))
         
+#phone number login
+account_sid = "AC97fd9a03c4637fe246adcecc613bb153"
+auth_token = os.environ["TWILIO_AUTH_TOKEN"]
+verify_sid = "VA629a29a82eedcde1e6c89e5f586fdbfd"
+
+if menu_choice == "OTP Login":
+    st.text("Please enter country code followed by phone number")
+    st.text("For example: +919255520023")
+    verified_number = st.text_input("Enter your phone number")
+
+    client = Client(account_sid, auth_token)
+    otp_sent = False
+    if st.button("Send OTP"):
+        verification = client.verify.v2.services(verify_sid) \
+        .verifications \
+        .create(to=verified_number, channel="sms")
+        if (verification.status == "pending" or verification.status == "started"):
+            st.success("OTP sent successfully to " + verified_number)
+            otp_sent = True
+        else:
+            st.error("Error sending OTP")
+
+    if otp_sent:
+        otp_code = st.text_input("Please enter the OTP:")
+        if st.button("Verify OTP"):
+            verification_check = client.verify.v2.services(verify_sid) \
+            .verification_checks \
+            .create(to=verified_number, code=otp_code)
+            if (verification_check.status == "approved"):
+                st.success("OTP Verified")
+            else:
+                st.error("OTP Verification Failed")
     
 hide_streamlit_style = """
             <style>
