@@ -171,20 +171,19 @@ if menu_choice == "OTP Login":
         else:
             st.error("Error sending OTP")
 
-    if otp_sent:
-        otp_code = st.text_input("Please enter the OTP:")
-        if st.button("Verify OTP"):
-            verification_check = client.verify.v2.services(verify_sid) \
-            .verification_checks \
-            .create(to=verified_number, code=otp_code)
-            if (verification_check.status == "approved"):
-                st.success("OTP Verified")
-                client = pymongo.MongoClient("mongodb+srv://admin:Admin123@aps.agcjjww.mongodb.net/?retryWrites=true&w=majority")
-                db = client["aps-db"]
-                users = db["users"]
-                users.insert_one({"phone": verified_number})
-            else:
-                st.error("OTP Verification Failed")
+    otp_code = st.text_input("Please enter the OTP:",type="password")
+    if st.button("Verify OTP"):
+        verification_check = client.verify.v2.services(verify_sid) \
+        .verification_checks \
+        .create(to=verified_number, code=otp_code)
+        if (verification_check.status == "approved"):
+            st.success("OTP Verified")
+            client = pymongo.MongoClient("mongodb+srv://admin:Admin123@aps.agcjjww.mongodb.net/?retryWrites=true&w=majority")
+            db = client["aps-db"]
+            users = db["users"]
+            users.insert_one({"phone": verified_number})
+        else:
+            st.error("OTP Verification Failed")
             
     
 hide_streamlit_style = """
